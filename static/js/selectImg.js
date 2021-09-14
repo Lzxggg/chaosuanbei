@@ -73,37 +73,55 @@
 
 function onload(){
     var input = document.getElementById("file_input");
+    //获取index.html +54 行  文件内容的dom获取
     var result,rectangle="";
     var dataArr = [];
+    //用来存储转base64以后的空数组
     var fd;
+    //FormData() 的容器声明
     var oAdd = document.getElementById("add");
+    //获取index.html +53 行  上传文件的button按钮获取
     var oSubmit = document.getElementById("send");
+    //获取index.html +57 行  提交图片至服务器端的button按钮获取
     var oInput = document.getElementById("file_input");
+    //获取index.html +54 行  文件内容的dom获取
 
+    //浏览器兼容判断 FileReader为H5的事件模型
     if(typeof FileReader==='undefined'){
         alert("抱歉，你的浏览器不支持 FileReader");
         input.setAttribute('disabled','disabled');
     }else{
+        //onchange 事件：该事件在表单元素的内容改变时触发( <input>, <keygen>, <select>, 和 <textarea>)
+        //也就是说选择完图片以后 input dom 改变了  要执行 readFile操作
         input.addEventListener('change',readFile,false);
     }
     function readFile(){
+        //FormData主要把表单数据 采取键值对的形式存储
         fd = new FormData();
         var iLen = this.files.length;
         var index = 0;
         for(var i=0;i<iLen;i++){
+            //图片格式检测
             if (!input['value'].match(/.jpg|.gif|.png|.jpeg|.bmp/i)){
                 return alert("上传的图片格式不正确，请重新选择");
             }
             var reader = new FileReader();
+            //存储 i为键   this.files[i]为值的键值对
             fd.append(i,this.files[i]);
+            //转base64
             reader.readAsDataURL(this.files[i]);
             reader.fileName = this.files[i].name;
+            //读取文件时触发事件
             reader.onload = function(e){
+                //建一个 base64 对象的对象 存储
                 var imgMsg = {
                     imgname : this.fileName,
                     base64 :  this.result
                 }
+
                 dataArr.push(imgMsg);
+
+                //给该图片处理  从此行至132 就是上传图片后 图片底部的那一行灰白色
                 result = '<div class="item col-md-12 col-xs-12"><div id="'+this.fileName+'" style="cursor: default;" class="img_show"><img src="'+this.result+'"/></div><div class="img_title">'+this.fileName+'</div><div id="button-group'+index+'" class="btns"></div></div>';
 
                 //result = '<div class="result"><img src="'+this.result+'" alt=""/></div>';
@@ -112,7 +130,9 @@ function onload(){
                 div['className'] = 'float';
                 div['index'] = index;
 
+                //添加dom树
                 document.getElementById('show').appendChild(div);
+
                 var img = div.getElementsByTagName('img')[0];
                 img.onload = function(){
                     this.parentNode.style.display = 'block';
@@ -122,18 +142,27 @@ function onload(){
             }
         }
     }
+
+    //文件图片点击后 触发
     oAdd.onclick=function(){
         oInput.value = "";
+        //清空原来input的图片
         $('.float').remove();
+        //移除底部那一行的灰白色
         dataArr = [];
+        //清空base64数组
         index = 0;
         oInput.click();
     }
+    //识别瑕疵 点击后的响应事件
     oSubmit.onclick=function(){
+        //base64 数组打印
         console.log(dataArr)
+        //判断是否为空图
         if (dataArr.length==0) {
             alert("识别的图片不能为空哦")
         }
+        //遍历循环
         for (var i = 0; i <dataArr.length ; i++) {
 
             var o = document.getElementById(dataArr[i].imgname);
@@ -151,6 +180,7 @@ function onload(){
             var characterSet="0123456789QWERTYUIOPASDFGHJKLZXCVBNMqwertyuioplkjhgfdsazxcvbnm";
             secretsign += characterSet.charAt(Math.ceil(Math.random()*10000)%characterSet.length)+characterSet.charAt(Math.ceil(Math.random()*10000)%characterSet.length)+characterSet.charAt(Math.ceil(Math.random()*10000)%characterSet.length);
 
+            //ajax 请求服务器
             $.ajax({
                 url: '/recognize',
                 type: 'post',
